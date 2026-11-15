@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}Protected Admin Dashboard | SQLi Lab{% endblock %}
+
+{% block content %}
+<div class="variant-header">
+  <h1 style="font-size:1.6rem;color:#fff;">Protected Admin Dashboard</h1>
+  <p style="color:var(--text-muted);">This page is accessible only after the SQLi lab creates an authenticated Administrator session.</p>
+  <div class="variant-meta">
+    <div class="meta-pill"><span class="meta-label">Authenticated as:</span> <span class="meta-val">{{ user.username }}</span></div>
+    <div class="meta-pill"><span class="meta-label">Role:</span> <span class="meta-val">{{ user.role }}</span></div>
+    <div class="meta-pill"><span class="meta-label">User ID:</span> <span class="meta-val">{{ user.id }}</span></div>
+  </div>
+</div>
+<div class="card">
+  <div class="alert alert-success">
+    <strong>Access granted.</strong> The server validated the authenticated session and allowed access to this protected route.
+  </div>
+  <h3 class="card-title">Administrator account (simulated lab data)</h3>
+  <p><strong>Username:</strong> {{ user.username }}</p>
+  <p><strong>Email:</strong> {{ user.email }}</p>
+  <p><strong>Lab proof flag:</strong> {{ user.secret_flag }}</p>
+  <p><strong>Demo balance:</strong> ${{ "%.2f"|format(user.balance) }}</p>
+  <form method="POST" action="{{ url_for('sqli_auth_logout') }}">
+    <button class="btn btn-secondary" type="submit">Log out of SQLi lab</button>
+  </form>
+  <p style="margin-top:1rem;color:var(--text-muted);font-size:.85rem;">Educational demonstration only. Do not use real credentials or deploy the vulnerable mode.</p>
+</div>
+{% endblock %}

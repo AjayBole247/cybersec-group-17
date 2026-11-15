@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}CSRF: GET-Based Forged Action | Bonus Variant{% endblock %}
+
+{% block content %}
+<div class="variant-header">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+        <div>
+            <h1 style="font-size: 1.6rem; color: #fff;">Cross-Site Request Forgery (CSRF): Variant 1 (GET-based)</h1>
+            <p style="color: var(--text-muted);">Demonstration of forged state changes via HTTP GET requests (e.g. embedded &lt;img&gt; tags)</p>
+        </div>
+        <span class="nav-logo-badge" style="background: #a855f7; color: #fff;">Variant 1 (GET)</span>
+    </div>
+</div>
+
+<div class="mode-toggle-box">
+    <div class="mode-info">
+        <span style="font-size: 0.9rem; font-weight: 600;">MODE:</span>
+        {% if mode == 'vulnerable' %}
+            <span class="mode-badge mode-vulnerable">Vulnerable Mode (State-Changing GET Permitted)</span>
+        {% else %}
+            <span class="mode-badge mode-mitigated">Mitigated Mode (State-Changing GET Rejected)</span>
+        {% endif %}
+    </div>
+    <div>
+        {% if mode == 'vulnerable' %}
+            <a href="{{ url_for('csrf_get', mode='mitigated') }}" class="mode-switch-btn btn-to-mitigated">Switch to Mitigated Mode &rarr;</a>
+        {% else %}
+            <a href="{{ url_for('csrf_get', mode='vulnerable') }}" class="mode-switch-btn btn-to-vulnerable">&larr; Switch to Vulnerable Mode</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="grid-2">
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">🔗 GET-Based Transfer Simulation</h3>
+            </div>
+            
+            <p style="font-size: 0.88rem; color: #cbd5e1; margin-bottom: 1rem;">
+                In vulnerable systems, developers improperly use GET parameters for actions that change state. 
+                An attacker simply places an image tag in a third-party site or forum:
+            </p>
+
+            <pre class="code-box" style="margin-bottom: 1rem;"><code>&lt;!-- Malicious image tag loaded automatically by victim browser --&gt;
+&lt;img src="http://127.0.0.1:5000/csrf-get?mode=vulnerable&amp;action=transfer&amp;recipient=attacker&amp;amount=1000" width="0" height="0" /&gt;</code></pre>
+
+            <div style="display: flex; gap: 0.5rem; flex-direction: column;">
+                <a href="{{ url_for('csrf_get', mode=mode, action='transfer', recipient='attacker_account', amount='1000.00') }}" class="btn btn-danger btn-sm">
+                    Simulate Loading Forged GET URL
+                </a>
+            </div>
+        </div>
+
+        {% if result %}
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📡 Server Action Result</h3>
+                </div>
+                <div class="console-box {% if 'BLOCKED' in result %}blocked{% endif %}">
+{{ result }}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">💡 GET-Based CSRF Vulnerability</h3>
+            </div>
+            <p style="font-size: 0.9rem; color: #cbd5e1; line-height: 1.6;">
+                HTTP GET requests are defined by standard specifications (RFC 7231) to be <strong>safe and idempotent</strong> (retrieval only). 
+                When a web server modifies state (such as transferring money or deleting data) via GET requests, any HTML element that triggers a GET 
+                (such as <code>&lt;img src="..."&gt;</code>, <code>&lt;iframe&gt;</code>, or <code>&lt;link&gt;</code>) can forge actions without user knowledge.
+            </p>
+            <div class="callout callout-mitigation">
+                <strong>Mitigation:</strong> Strict adherence to HTTP verbs: state changes MUST only be accepted via POST/PUT/DELETE, protected by anti-CSRF synchronizer tokens and SameSite cookies.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

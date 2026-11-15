@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard | Cyber Security Web Lab{% endblock %}
+
+{% block content %}
+<div class="variant-header">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h1 style="font-size: 1.8rem; font-weight: 800; color: #fff;">Web Server Security Assessment & Mitigation</h1>
+            <p style="color: var(--text-muted); margin-top: 0.25rem;">
+                Department of Information Technology, Indian Institute of Information Technology Allahabad (IT-30001)
+            </p>
+        </div>
+        <div style="text-align: right;">
+            <div class="meta-pill">
+                <span class="meta-label">Instructor:</span>
+                <span class="meta-val" style="color: var(--accent-cyan);">Dr. Soumyadev Maity</span>
+            </div>
+            <div class="meta-pill" style="margin-top: 0.5rem;">
+                <span class="meta-label">Semester:</span>
+                <span class="meta-val">Autumn 2026</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Table 3 Ownership Declaration Card -->
+<div class="card" style="border: 2px solid rgba(0, 229, 255, 0.3);">
+    <div class="card-header">
+        <h2 class="card-title">
+            <span style="color: var(--accent-cyan);">📋 Table 3:</span> Individual Ownership Declaration
+        </h2>
+        <span class="meta-pill">Mandatory Group Mapping</span>
+    </div>
+    <div class="table-responsive">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th>Member Name</th>
+                    <th>Roll Number</th>
+                    <th>Vulnerability Category</th>
+                    <th>Variant Implemented</th>
+                    <th>Direct Lab Link</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Ajay Bole</strong></td>
+                    <td><code>IIT2024088</code></td>
+                    <td><span class="meta-pill" style="color: #60a5fa;">SQL Injection</span></td>
+                    <td>Variant 1: Authentication Bypass</td>
+                    <td><a href="{{ url_for('sqli_auth') }}" class="btn btn-primary btn-sm">Launch Module &rarr;</a></td>
+                </tr>
+                <tr>
+                    <td><strong>Sayan Biswas</strong></td>
+                    <td><code>IIT2024090</code></td>
+                    <td><span class="meta-pill" style="color: #60a5fa;">SQL Injection</span></td>
+                    <td>Variant 2: UNION-based Data Extraction</td>
+                    <td><a href="{{ url_for('sqli_union') }}" class="btn btn-primary btn-sm">Launch Module &rarr;</a></td>
+                </tr>
+                <tr>
+                    <td><strong>Prince Kumar</strong></td>
+                    <td><code>IIT2024085</code></td>
+                    <td><span class="meta-pill" style="color: #f87171;">OS Command Injection</span></td>
+                    <td>Variant 1: In-Band (Command Output Returned)</td>
+                    <td><a href="{{ url_for('cmd_injection') }}" class="btn btn-primary btn-sm">Launch Module &rarr;</a></td>
+                </tr>
+                <tr>
+                    <td><strong>Chandan Kumar Das</strong></td>
+                    <td><code>IIT2024070</code></td>
+                    <td><span class="meta-pill" style="color: #facc15;">Cross-Site Scripting (XSS)</span></td>
+                    <td>Variant 1: Stored XSS</td>
+                    <td><a href="{{ url_for('xss_stored') }}" class="btn btn-primary btn-sm">Launch Module &rarr;</a></td>
+                </tr>
+                <tr>
+                    <td><strong>Raghvendra</strong></td>
+                    <td><code>IIT2024062</code></td>
+                    <td><span class="meta-pill" style="color: #c084fc;">Cross-Site Request Forgery (CSRF)</span></td>
+                    <td>Variant 2: POST-based Forged Action (Auto-submitting Form)</td>
+                    <td><a href="{{ url_for('csrf_post') }}" class="btn btn-primary btn-sm">Launch Module &rarr;</a></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Project Architecture & Quick Test Cards -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">
+            <span>🛡️ Project Architecture & Viva Demonstration Workflow</span>
+        </h2>
+    </div>
+    <div style="font-size: 0.95rem; color: #cbd5e1; line-height: 1.7;">
+        <p>
+            This integrated web application provides an authentic, dual-state testing ground for security evaluation and remediation.
+            Each team member's module implements:
+        </p>
+        <ul style="margin: 0.75rem 0 0.75rem 1.5rem;">
+            <li><strong>Dual Execution Engine:</strong> Real-time toggle between <code>Vulnerable Mode</code> (faulty concatenation/missing checks) and <code>Mitigated Mode</code> (hardened defensive implementation).</li>
+            <li><strong>Side-by-Side Code Inspection:</strong> Precise source code paths showing the flawed function versus the secure refactored logic.</li>
+            <li><strong>One-Click Exploit Injection:</strong> Ready-to-run academic payloads to demonstrate exploitation live during video recordings and individual viva defense.</li>
+            <li><strong>Mitigation Proof:</strong> Shows the identical payload fail or get safely blocked with appropriate security controls in Mitigated mode.</li>
+            <li><strong>Lecture Slides Theoretical Coverage:</strong> Summaries of all alternative mitigations (prepared statements, allow-lists, least-privilege, safe DOM sinks, CSP, SameSite tokens).</li>
+        </ul>
+    </div>
+</div>
+
+<!-- Additional Reference Variants -->
+<div class="card" style="background-color: rgba(22, 32, 50, 0.6);">
+    <div class="card-header">
+        <h3 class="card-title" style="font-size: 1.1rem; color: var(--text-muted);">
+            <span>⚡ Bonus Reference Variants (Available for Extended Viva Discussion)</span>
+        </h3>
+    </div>
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <a href="{{ url_for('cmd_blind') }}" class="btn btn-secondary btn-sm">OS Command Injection: Variant 2 (Blind)</a>
+        <a href="{{ url_for('xss_reflected') }}" class="btn btn-secondary btn-sm">XSS: Variant 2 (Reflected)</a>
+        <a href="{{ url_for('csrf_get') }}" class="btn btn-secondary btn-sm">CSRF: Variant 1 (GET-based)</a>
+        <a href="{{ url_for('attacker_portal') }}" class="btn btn-danger btn-sm">Simulated External Attacker Portal</a>
+    </div>
+</div>
+{% endblock %}

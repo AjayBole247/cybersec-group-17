@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Cross-Site Scripting: Reflected XSS | Bonus Variant{% endblock %}
+
+{% block content %}
+<div class="variant-header">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+        <div>
+            <h1 style="font-size: 1.6rem; color: #fff;">Cross-Site Scripting (XSS): Variant 2 (Reflected XSS)</h1>
+            <p style="color: var(--text-muted);">Demonstration of immediate script reflection in the response without persistent storage</p>
+        </div>
+        <span class="nav-logo-badge" style="background: #eab308; color: #000;">Variant 2 (Reflected)</span>
+    </div>
+</div>
+
+<div class="mode-toggle-box">
+    <div class="mode-info">
+        <span style="font-size: 0.9rem; font-weight: 600;">MODE:</span>
+        {% if mode == 'vulnerable' %}
+            <span class="mode-badge mode-vulnerable">Vulnerable Mode (Unescaped Reflection)</span>
+        {% else %}
+            <span class="mode-badge mode-mitigated">Mitigated Mode (Context-Aware Output Encoded)</span>
+        {% endif %}
+    </div>
+    <div>
+        {% if mode == 'vulnerable' %}
+            <a href="{{ url_for('xss_reflected', mode='mitigated', q=query) }}" class="mode-switch-btn btn-to-mitigated">Switch to Mitigated Mode &rarr;</a>
+        {% else %}
+            <a href="{{ url_for('xss_reflected', mode='vulnerable', q=query) }}" class="mode-switch-btn btn-to-vulnerable">&larr; Switch to Vulnerable Mode</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="grid-2">
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">🔍 Knowledge Base Instant Search</h3>
+            </div>
+            <form action="{{ url_for('xss_reflected') }}" method="GET">
+                <input type="hidden" name="mode" value="{{ mode }}">
+                <div class="form-group">
+                    <label class="form-label" for="q">Search Query:</label>
+                    <input type="text" id="q" name="q" class="form-input form-input-mono" value="{{ query }}" placeholder="Search term..." required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Search Knowledge Base</button>
+            </form>
+
+            <div class="payload-shelf">
+                <div class="payload-shelf-title">⚡ Reflected XSS Payloads:</div>
+                <div class="payload-list">
+                    <span class="payload-chip" data-target="q" data-payload="<script>alert('Reflected XSS: Executed!')</script>">&lt;script&gt;alert(1)&lt;/script&gt;</span>
+                    <span class="payload-chip" data-target="q" data-payload="<img src=x onerror=alert('Reflected_IMG')>">&lt;img onerror&gt;</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">🔎 Search Results Output</h3>
+            </div>
+            {% if query %}
+                <div style="font-size: 1rem; color: #cbd5e1; padding: 1rem; background-color: var(--bg-primary); border-radius: 8px;">
+                    Search results for: 
+                    {% if mode == 'vulnerable' %}
+                        {# Vulnerable: direct unescaped output #}
+                        <strong>{{ query | safe }}</strong>
+                    {% else %}
+                        {# Mitigated: auto-escaped HTML entities #}
+                        <strong>{{ query }}</strong>
+                    {% endif %}
+                </div>
+            {% else %}
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Submit a search query above to observe response reflection.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">💡 Reflected XSS Mechanics</h3>
+            </div>
+            <p style="font-size: 0.9rem; color: #cbd5e1; line-height: 1.6;">
+                In Reflected XSS, the payload travels from the HTTP request (URL parameter or form input) directly into the immediate HTTP response 
+                without being permanently stored in any database. The attacker typically embeds the payload in a phishing URL.
+            </p>
+            <div class="callout callout-mitigation">
+                <strong>Mitigation:</strong> Context-aware output encoding (converting <code>&lt;</code>, <code>&gt;</code>, <code>&quot;</code> to HTML entities) and Content Security Policy (CSP).
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

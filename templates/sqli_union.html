@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+
+{% block title %}SQL Injection: UNION Extraction | Sayan Biswas{% endblock %}
+
+{% block content %}
+<div class="variant-header">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+        <div>
+            <h1 style="font-size: 1.6rem; color: #fff;">SQL Injection: Variant 2 (UNION-based Data Extraction)</h1>
+            <p style="color: var(--text-muted);">Demonstration of exfiltrating cross-table confidential data via UNION SELECT operator</p>
+        </div>
+        <div>
+            <span class="nav-logo-badge" style="background: #3b82f6; color: #fff; font-size: 0.9rem; padding: 0.4rem 0.8rem;">
+                SAYAN BISWAS (IIT2024090)
+            </span>
+        </div>
+    </div>
+    <div class="variant-meta">
+        <div class="meta-pill"><span class="meta-label">Category:</span> <span class="meta-val">SQL Injection</span></div>
+        <div class="meta-pill"><span class="meta-label">Variant:</span> <span class="meta-val">Variant 2 (UNION-based Data Extraction)</span></div>
+        <div class="meta-pill"><span class="meta-label">Target Function:</span> <span class="meta-val">GET /sqli-union?category=...</span></div>
+    </div>
+</div>
+
+<!-- Mode Switcher -->
+<div class="mode-toggle-box">
+    <div class="mode-info">
+        <span style="font-size: 0.9rem; font-weight: 600;">ACTIVE ENGINE MODE:</span>
+        {% if mode == 'vulnerable' %}
+            <span class="mode-badge mode-vulnerable">Vulnerable Mode (Dynamic Query String)</span>
+        {% else %}
+            <span class="mode-badge mode-mitigated">Mitigated Mode (Parameterized Query Prepared)</span>
+        {% endif %}
+    </div>
+    <div>
+        {% if mode == 'vulnerable' %}
+            <a href="{{ url_for('sqli_union', mode='mitigated', category=category) }}" class="mode-switch-btn btn-to-mitigated">
+                Switch to Mitigated Mode &rarr;
+            </a>
+        {% else %}
+            <a href="{{ url_for('sqli_union', mode='vulnerable', category=category) }}" class="mode-switch-btn btn-to-vulnerable">
+                &larr; Switch to Vulnerable Mode
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="grid-2">
+    <!-- Left Column: Search Filter & Results -->
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">🔍 Cyber Security Equipment Catalog</h3>
+                <span class="meta-pill">Catalog Query</span>
+            </div>
+
+            <form action="{{ url_for('sqli_union') }}" method="GET">
+                <input type="hidden" name="mode" value="{{ mode }}">
+
+                <div class="form-group">
+                    <label class="form-label" for="category">Product Category Filter:</label>
+                    <input type="text" id="category" name="category" class="form-input form-input-mono" value="{{ category }}" required>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Filter Catalog</button>
+                    <a href="{{ url_for('sqli_union', mode=mode, category='Hardware') }}" class="btn btn-secondary">Reset to 'Hardware'</a>
+                </div>
+            </form>
+
+            <div class="payload-shelf">
+                <div class="payload-shelf-title">⚡ Quick UNION Extraction Payloads (5 Columns):</div>
+                <div class="payload-list">
+                    <span class="payload-chip" data-target="category" data-payload="' UNION SELECT id, username, password, role, secret_flag FROM users --">' UNION SELECT id, username, password, role, secret_flag FROM users --</span>
+                    <span class="payload-chip" data-target="category" data-payload="' UNION SELECT 1, sqlite_version(), 'DB_TEST', 13.37, 'PROBE' --">' UNION SELECT DB Version Probe --</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Query Execution Console & Product Results -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">📦 Catalog Results (Total Rows: {{ products|length }})</h3>
+            </div>
+
+            {% if executed_query %}
+                <div style="margin-bottom: 0.75rem;">
+                    <span class="form-label">Executed Database Query:</span>
+                    <pre class="code-box" style="margin: 0; padding: 0.6rem; color: #38bdf8;">{{ executed_query }}</pre>
+                </div>
+            {% endif %}
+
+            {% if raw_error %}
+                <div class="alert alert-danger">
+                    <strong>SQL Error:</strong> {{ raw_error }}
+                </div>
+            {% endif %}
+
+            {% if products %}
+                <div class="table-responsive">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Item Name / Extracted Field</th>
+                                <th>Category / Role</th>
+                                <th>Price / Credential</th>
+                                <th>Description / Secret Flag</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in products %}
+                            <tr {% if 'FLAG{' in p.description or 'FLAG{' in p.price|string or 'SuperAdmin' in p.description %}style="background-color: rgba(239, 68, 68, 0.2); border-left: 3px solid #ef4444;"{% endif %}>
+                                <td><code>{{ p.id }}</code></td>
+                                <td><strong>{{ p.name }}</strong></td>
+                                <td><span class="meta-pill" style="font-size: 0.75rem;">{{ p.category }}</span></td>
+                                <td><code style="color: #38bdf8;">{{ p.price }}</code></td>
+                                <td>
+                                    {% if 'FLAG{' in p.description %}
+                                        <strong style="color: #f87171;">{{ p.description }}</strong>
+                                    {% else %}
+                                        {{ p.description }}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="console-box blocked">
+[-] No products returned for the specified category query.
+{% if mode == 'mitigated' %}
+[+] DEFENSE ACTIVE: Parameterized query bound the input as a literal category string.
+[+] UNION injection failed: No product category matched the malicious string.
+{% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Right Column: Code Comparison & Table 2 Details -->
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">💻 Source Code Comparison</h3>
+                <span class="meta-pill">Table 2(a) & 2(d)</span>
+            </div>
+
+            <div class="code-title" style="color: var(--accent-red);">(a) Vulnerable Implementation</div>
+            <pre class="code-box code-vulnerable"><code># Flawed: String concatenation in WHERE clause with 5 columns
+executed_query = f"SELECT id, name, category, price, description FROM products WHERE category = '{category}'"
+cursor.execute(executed_query)
+products = cursor.fetchall()</code></pre>
+
+            <div class="code-title" style="color: var(--accent-green);">(d) Implemented Mitigation</div>
+            <pre class="code-box code-mitigated"><code># Secure: Parameterized query enforces strict data type binding
+executed_query = "SELECT id, name, category, price, description FROM products WHERE category = ?"
+cursor.execute(executed_query, (category,))
+products = cursor.fetchall()</code></pre>
+        </div>
+
+        <div class="callout callout-root-cause">
+            <strong style="color: var(--accent-red); font-size: 0.95rem;">Table 2(c) Root Cause:</strong>
+            <p style="margin-top: 0.35rem; color: #fecaca; font-size: 0.88rem;">
+                The application directly concatenates unfiltered input into a SQL statement that returns a 5-column result set.
+                By injecting the <code>UNION</code> operator with an identical column count, an attacker appends rows from the confidential 
+                <code>users</code> table into the product catalog stream, exfiltrating administrative credentials and secret flags.
+            </p>
+        </div>
+
+        <div class="callout callout-theory">
+            <strong style="color: #60a5fa; font-size: 0.95rem;">Table 2(e) Alternative Mitigations (Lecture Slides Theory):</strong>
+            <ul style="margin: 0.5rem 0 0 1.25rem; font-size: 0.85rem; color: #bfdbfe; line-height: 1.6;">
+                <li><strong>Parameterized Queries / Prepared Statements:</strong> Ensures the database query planner treats user input strictly as a parameter value rather than executable SQL syntax.</li>
+                <li><strong>Strict Allow-List Input Validation:</strong> Only allow predetermined valid categories (e.g. <code>Hardware</code>, <code>Software</code>, <code>Books</code>) by verifying input against a fixed server-side enum.</li>
+                <li><strong>Least-Privilege Database Accounts:</strong> Partition database access so the catalog application user account lacks <code>SELECT</code> privileges on sensitive tables like <code>users</code> or <code>transactions</code>.</li>
+                <li><strong>Safe Error Handling:</strong> Suppress verbose database error descriptions to prevent attackers from enumerating column counts and schema structures via trial-and-error UNION probes.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

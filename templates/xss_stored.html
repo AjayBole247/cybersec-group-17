@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% block title %}Cross-Site Scripting: Stored XSS | Chandan Kumar Das{% endblock %}
+
+{% block content %}
+<div class="variant-header">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+        <div>
+            <h1 style="font-size: 1.6rem; color: #fff;">Cross-Site Scripting (XSS): Variant 1 (Stored XSS)</h1>
+            <p style="color: var(--text-muted);">Demonstration of persistent script injection stored in database and executed in victim browsers</p>
+        </div>
+        <div>
+            <span class="nav-logo-badge" style="background: #eab308; color: #000; font-size: 0.9rem; padding: 0.4rem 0.8rem;">
+                CHANDAN KUMAR DAS (IIT2024070)
+            </span>
+        </div>
+    </div>
+    <div class="variant-meta">
+        <div class="meta-pill"><span class="meta-label">Category:</span> <span class="meta-val">Cross-Site Scripting (XSS)</span></div>
+        <div class="meta-pill"><span class="meta-label">Variant:</span> <span class="meta-val">Variant 1: Stored XSS (Persistent)</span></div>
+        <div class="meta-pill"><span class="meta-label">Target Function:</span> <span class="meta-val">POST & GET /xss-stored</span></div>
+    </div>
+</div>
+
+<!-- Mode Switcher -->
+<div class="mode-toggle-box">
+    <div class="mode-info">
+        <span style="font-size: 0.9rem; font-weight: 600;">ACTIVE ENGINE MODE:</span>
+        {% if mode == 'vulnerable' %}
+            <span class="mode-badge mode-vulnerable">Vulnerable Mode (Unescaped | safe Rendering)</span>
+        {% else %}
+            <span class="mode-badge mode-mitigated">Mitigated Mode (Context-Aware HTML Entity Escaping)</span>
+        {% endif %}
+    </div>
+    <div>
+        {% if mode == 'vulnerable' %}
+            <a href="{{ url_for('xss_stored', mode='mitigated') }}" class="mode-switch-btn btn-to-mitigated">
+                Switch to Mitigated Mode &rarr;
+            </a>
+        {% else %}
+            <a href="{{ url_for('xss_stored', mode='vulnerable') }}" class="mode-switch-btn btn-to-vulnerable">
+                &larr; Switch to Vulnerable Mode
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="grid-2">
+    <!-- Left Column: Guestbook Form & Live Feed -->
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">📝 Community Discussion Forum & Guestbook</h3>
+                <span class="meta-pill">Persistent Storage</span>
+            </div>
+
+            <form action="{{ url_for('xss_stored') }}" method="POST">
+                <input type="hidden" name="mode" value="{{ mode }}">
+
+                <div class="form-group">
+                    <label class="form-label" for="author">Display Name / Author:</label>
+                    <input type="text" id="author" name="author" class="form-input" value="Student Auditor" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="message">Comment / Message Body:</label>
+                    <textarea id="message" name="message" class="form-input form-input-mono" rows="3" placeholder="Type your comment here..." required></textarea>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Post Comment to Feed</button>
+                </div>
+            </form>
+
+            <div class="payload-shelf">
+                <div class="payload-shelf-title">⚡ Quick Stored XSS Payloads (Click to Test):</div>
+                <div class="payload-list">
+                    <span class="payload-chip" data-target="message" data-payload="<script>alert('STORED XSS TRIGGERED! Document Cookie: ' + document.cookie);</script>">&lt;script&gt; Cookie Alert</span>
+                    <span class="payload-chip" data-target="message" data-payload="<img src='invalid-image' onerror=&quot;alert('Stored XSS via IMG onerror: Executed!')&quot;>">&lt;img onerror&gt; Payload</span>
+                    <span class="payload-chip" data-target="message" data-payload="<svg onload=&quot;alert('SVG onload XSS in: ' + window.location.origin)&quot;>">&lt;svg onload&gt; Payload</span>
+                    <span class="payload-chip" data-target="message" data-payload="<h3 style='color:red;'>Defaced Title Header</h3>">Harmless HTML Formatting</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rendered Comments Feed -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">💬 Forum Message Stream (Total: {{ comments|length }})</h3>
+                <form action="{{ url_for('clear_comments') }}" method="POST" style="margin: 0;">
+                    <button type="submit" class="btn btn-secondary btn-sm">Clear Injected Posts</button>
+                </form>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                {% for c in comments %}
+                    <div style="background-color: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.8rem; color: var(--text-muted);">
+                            <span><strong>{{ c.author }}</strong></span>
+                            <span>{{ c.created_at }}</span>
+                        </div>
+                        
+                        <div style="font-size: 0.95rem; color: #f1f5f9; padding: 0.5rem 0;">
+                            {% if mode == 'vulnerable' %}
+                                {# VULNERABLE: Direct unescaped rendering using Jinja2 safe filter #}
+                                {{ c.message | safe }}
+                            {% else %}
+                                {# MITIGATED: Auto-escaped rendering neutralizes HTML tags #}
+                                {{ c.message }}
+                            {% endif %}
+                        </div>
+
+                        <!-- Raw DB Stored Value Inspection -->
+                        <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px dashed #24324d; font-size: 0.75rem; color: #64748b; font-family: var(--font-mono);">
+                            Raw DB Value: <code>{{ c.message }}</code>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Code Comparison & Table 2 Details -->
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">💻 Source Code Comparison</h3>
+                <span class="meta-pill">Table 2(a) & 2(d)</span>
+            </div>
+
+            <div class="code-title" style="color: var(--accent-red);">(a) Vulnerable Implementation (Unescaped Rendering)</div>
+            <pre class="code-box code-vulnerable"><code># Flawed: Jinja template explicitly bypasses autoescaping
+&lt;div class="comment-body"&gt;
+    {{ "{{ comment.message | safe }}" }}
+&lt;/div&gt;</code></pre>
+
+            <div class="code-title" style="color: var(--accent-green);">(d) Implemented Mitigation (HTML Entity Encoding)</div>
+            <pre class="code-box code-mitigated"><code># Secure: 1. Server-side entity encoding
+sanitized_message = html.escape(message)
+
+# 2. Template context autoescaping (without '| safe')
+&lt;div class="comment-body"&gt;
+    {{ "{{ comment.message }}" }}
+&lt;/div&gt;
+# Result: '&lt;' becomes '&amp;lt;' preventing script execution</code></pre>
+        </div>
+
+        <div class="callout callout-root-cause">
+            <strong style="color: var(--accent-red); font-size: 0.95rem;">Table 2(c) Root Cause:</strong>
+            <p style="margin-top: 0.35rem; color: #fecaca; font-size: 0.88rem;">
+                Untrusted user input is stored directly in the database without encoding and later embedded into the HTML document 
+                using an unescaped context (<code>| safe</code>). The browser parses the malicious <code>&lt;script&gt;</code> or 
+                event handler tags as genuine client-side code, executing arbitrary JavaScript within every visiting victim's active session.
+            </p>
+        </div>
+
+        <div class="callout callout-theory">
+            <strong style="color: #60a5fa; font-size: 0.95rem;">Table 2(e) Alternative Mitigations (Lecture Slides Theory):</strong>
+            <ul style="margin: 0.5rem 0 0 1.25rem; font-size: 0.85rem; color: #bfdbfe; line-height: 1.6;">
+                <li><strong>Context-Aware Output Encoding:</strong> Encode dynamic data appropriate to the output context (HTML body, HTML attributes, JavaScript context, or CSS). Converts characters like <code>&lt;</code>, <code>&gt;</code>, <code>&quot;</code>, <code>&apos;</code>, and <code>&amp;</code> into harmless entities.</li>
+                <li><strong>Framework Auto-Escaping:</strong> Leverage web template engines (Jinja2, React, Angular) that enable strict contextual HTML auto-escaping by default.</li>
+                <li><strong>Content Security Policy (CSP):</strong> HTTP response header (e.g. <code>Content-Security-Policy: default-src 'self'</code>) that disables inline script execution and restricts script sources to trusted origins.</li>
+                <li><strong>HttpOnly Cookie Flag:</strong> Directs browsers to block client-side JavaScript access to sensitive authentication cookies (<code>document.cookie</code>), mitigating session hijacking via XSS.</li>
+                <li><strong>Safe DOM Sinks & Rich HTML Sanitizers:</strong> Use well-audited libraries like DOMPurify or bleach if HTML tags must be permitted, while avoiding dangerous DOM sinks like <code>innerHTML</code> or <code>document.write</code>.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

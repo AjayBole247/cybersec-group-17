@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Cyber Security Lab | IIIT Allahabad{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <a href="{{ url_for('index') }}" class="nav-brand">
+                <span class="nav-logo-badge">IT-30001</span>
+                <div>
+                    <div class="nav-title">Web Server Security Lab</div>
+                    <div class="nav-subtitle">IIIT Allahabad | Autumn Semester 2026</div>
+                </div>
+            </a>
+
+            <ul class="nav-links">
+                <li><a href="{{ url_for('index') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('sqli_auth') }}">SQLi: Auth (Ajay)</a></li>
+                <li><a href="{{ url_for('sqli_union') }}">SQLi: UNION (Sayan)</a></li>
+                <li><a href="{{ url_for('cmd_injection') }}">Cmd Inj (Prince)</a></li>
+                <li><a href="{{ url_for('xss_stored') }}">XSS: Stored (Chandan)</a></li>
+                <li><a href="{{ url_for('csrf_post') }}">CSRF: POST (Raghvendra)</a></li>
+                <li><a href="{{ url_for('attacker_portal') }}" style="color: #f87171;">Attacker Portal</a></li>
+            </ul>
+
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div class="user-session-badge">
+                    <span>User: <strong>{{ session.get('user', 'Guest') }}</strong></span>
+                </div>
+                <form action="{{ url_for('reset_db_route') }}" method="POST" style="margin: 0;">
+                    <button type="submit" class="btn btn-secondary btn-sm" title="Reset SQLite DB to fresh seed state">
+                        Reset DB
+                    </button>
+                </form>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-container">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            <span>{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <div>
+            <strong>Indian Institute of Information Technology Allahabad</strong> — Department of Information Technology<br>
+            Cyber Security (IT-30001) | Instructor: <strong>Dr. Soumyadev Maity</strong>
+        </div>
+        <div style="margin-top: 0.5rem; font-size: 0.75rem; color: #64748b;">
+            Authors: Ajay Bole (IIT2024088) | Sayan Biswas (IIT2024090) | Prince Kumar (IIT2024085) | Chandan Kumar Das (IIT2024070) | Raghvendra (IIT2024062)
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

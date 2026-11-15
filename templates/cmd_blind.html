@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}OS Command Injection: Blind | Bonus Variant{% endblock %}
+
+{% block content %}
+<div class="variant-header">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+        <div>
+            <h1 style="font-size: 1.6rem; color: #fff;">OS Command Injection: Variant 2 (Blind / Time-Based)</h1>
+            <p style="color: var(--text-muted);">Demonstration of blind execution detected via server response latency (e.g. ping delay)</p>
+        </div>
+        <span class="nav-logo-badge" style="background: #ef4444; color: #fff;">Variant 2 (Blind)</span>
+    </div>
+</div>
+
+<div class="mode-toggle-box">
+    <div class="mode-info">
+        <span style="font-size: 0.9rem; font-weight: 600;">MODE:</span>
+        {% if mode == 'vulnerable' %}
+            <span class="mode-badge mode-vulnerable">Vulnerable Mode (Blind shell execution)</span>
+        {% else %}
+            <span class="mode-badge mode-mitigated">Mitigated Mode (Strict domain allow-list)</span>
+        {% endif %}
+    </div>
+    <div>
+        {% if mode == 'vulnerable' %}
+            <a href="{{ url_for('cmd_blind', mode='mitigated') }}" class="mode-switch-btn btn-to-mitigated">Switch to Mitigated Mode &rarr;</a>
+        {% else %}
+            <a href="{{ url_for('cmd_blind', mode='vulnerable') }}" class="mode-switch-btn btn-to-vulnerable">&larr; Switch to Vulnerable Mode</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="grid-2">
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">🔍 Blind DNS Lookup Utility</h3>
+            </div>
+            <form action="{{ url_for('cmd_blind') }}" method="POST">
+                <input type="hidden" name="mode" value="{{ mode }}">
+                <div class="form-group">
+                    <label class="form-label" for="domain">Target Domain for NSLookup:</label>
+                    <input type="text" id="domain" name="domain" class="form-input form-input-mono" value="google.com" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Execute Blind Lookup</button>
+            </form>
+
+            <div class="payload-shelf">
+                <div class="payload-shelf-title">⚡ Time-Based Blind Payloads:</div>
+                <div class="payload-list">
+                    <span class="payload-chip" data-target="domain" data-payload="127.0.0.1 && ping -n 5 127.0.0.1">127.0.0.1 && ping -n 5 127.0.0.1 (~4s delay)</span>
+                    <span class="payload-chip" data-target="domain" data-payload="127.0.0.1 & timeout /t 3">127.0.0.1 & timeout /t 3 (3s delay)</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">⏱️ Latency & Execution Metric</h3>
+            </div>
+            {% if execution_time is not none %}
+                <div class="console-box {% if 'BLOCKED' in status %}blocked{% endif %}">
+Server Execution Latency: {{ execution_time }} seconds
+Result Status: {{ status }}
+                </div>
+            {% else %}
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Submit a domain or payload to measure response latency.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">💡 Blind Command Injection Concept</h3>
+            </div>
+            <p style="font-size: 0.9rem; color: #cbd5e1; line-height: 1.6;">
+                In blind command injection, the application does not return the command output to the HTTP response. 
+                Attackers infer successful execution through <strong>time delays</strong> (e.g. using <code>ping -n 5</code> or <code>sleep</code>) 
+                or <strong>out-of-band channels</strong> (DNS queries to attacker-controlled nameservers).
+            </p>
+            <div class="callout callout-mitigation">
+                <strong>Mitigation:</strong> Strict allow-listing of hostnames via regular expressions and parameterised execution with <code>shell=False</code>.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

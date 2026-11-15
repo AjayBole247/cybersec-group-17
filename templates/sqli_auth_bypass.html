@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+
+{% block title %}SQL Injection: Auth Bypass | Ajay Bole{% endblock %}
+
+{% block content %}
+<!-- Module Header -->
+<div class="variant-header">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+        <div>
+            <h1 style="font-size: 1.6rem; color: #fff;">SQL Injection: Variant 1 (Authentication Bypass)</h1>
+            <p style="color: var(--text-muted);">Demonstration of login bypass through SQL metacharacters and logic alteration</p>
+        </div>
+        <div>
+            <span class="nav-logo-badge" style="background: #3b82f6; color: #fff; font-size: 0.9rem; padding: 0.4rem 0.8rem;">
+                AJAY BOLE (IIT2024088)
+            </span>
+        </div>
+    </div>
+    <div class="variant-meta">
+        <div class="meta-pill"><span class="meta-label">Category:</span> <span class="meta-val">SQL Injection</span></div>
+        <div class="meta-pill"><span class="meta-label">Variant:</span> <span class="meta-val">Variant 1 (Authentication Bypass)</span></div>
+        <div class="meta-pill"><span class="meta-label">Target Function:</span> <span class="meta-val">POST /sqli-auth</span></div>
+    </div>
+</div>
+
+<!-- Mode Switcher -->
+<div class="mode-toggle-box">
+    <div class="mode-info">
+        <span style="font-size: 0.9rem; font-weight: 600;">ACTIVE ENGINE MODE:</span>
+        {% if mode == 'vulnerable' %}
+            <span class="mode-badge mode-vulnerable">Vulnerable Mode (Concatenation Active)</span>
+        {% else %}
+            <span class="mode-badge mode-mitigated">Mitigated Mode (Parameterized Queries Active)</span>
+        {% endif %}
+    </div>
+    <div>
+        {% if mode == 'vulnerable' %}
+            <a href="{{ url_for('sqli_auth', mode='mitigated') }}" class="mode-switch-btn btn-to-mitigated">
+                Switch to Mitigated Mode &rarr;
+            </a>
+        {% else %}
+            <a href="{{ url_for('sqli_auth', mode='vulnerable') }}" class="mode-switch-btn btn-to-vulnerable">
+                &larr; Switch to Vulnerable Mode
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="grid-2">
+    <!-- Left Column: Interactive Form & Exploit Controls -->
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">🔐 Administrative Portal Login</h3>
+                <span class="meta-pill">Test Form</span>
+            </div>
+
+            <form action="{{ url_for('sqli_auth') }}" method="POST">
+                <input type="hidden" name="mode" value="{{ mode }}">
+                
+                <div class="form-group">
+                    <label class="form-label" for="username">Username:</label>
+                    <input type="text" id="username" name="username" class="form-input form-input-mono" placeholder="Enter username..." required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">Password:</label>
+                    <input type="password" id="password" name="password" class="form-input form-input-mono" placeholder="Enter password...">
+                </div>
+
+                <div style="display: flex; gap: 0.75rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Submit Login Request</button>
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('username').value=''; document.getElementById('password').value='';">Clear</button>
+                </div>
+            </form>
+
+            <!-- Working Exploit Payloads Shelf -->
+            <div class="payload-shelf">
+                <div class="payload-shelf-title">⚡ Quick Academic Payloads (Click to Auto-fill):</div>
+                <div class="payload-list">
+                    <span class="payload-chip" data-target="username" data-payload="admin' --">admin' -- (Comment Out Password)</span>
+                    <span class="payload-chip" data-target="username" data-payload="' OR '1'='1">' OR '1'='1 (Universal Tautology)</span>
+                    <span class="payload-chip" data-target="username" data-payload="admin' OR 1=1 --">admin' OR 1=1 -- (Admin Tautology)</span>
+                    <span class="payload-chip" data-target="username" data-payload="' OR 1=1 /*">' OR 1=1 /* (Inline Block Comment)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Server Response / Execution Console -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">📡 Server Execution Output</h3>
+            </div>
+            
+            {% if executed_query %}
+                <div style="margin-bottom: 0.75rem;">
+                    <span class="form-label">Executed SQL Query String:</span>
+                    <pre class="code-box" style="margin: 0; padding: 0.6rem; color: #38bdf8;">{{ executed_query }}</pre>
+                </div>
+            {% endif %}
+
+            {% if login_result %}
+                {% if login_result.success %}
+                    <div class="alert alert-success" style="margin-bottom: 0.75rem;">
+                        <div>
+                            <strong>{{ login_result.message }}</strong><br>
+                            <span style="font-size: 0.85rem;">Role: {{ login_result.user.role }} | Email: {{ login_result.user.email }}</span>
+                        </div>
+                    </div>
+                    <div class="console-box" style="color: #4ade80;">
+[+] AUTHENTICATION SUCCESSFUL — SERVER SESSION CREATED
+[+] Authenticated user: {{ login_result.user.username }}
+[+] Role: {{ login_result.user.role }}
+[+] User ID: {{ login_result.user.id }}
+[+] Session key: sqli_auth_user_id
+                    </div>
+                    {% if login_result.user.role == 'Administrator' %}
+                    <a class="btn btn-primary" style="display:inline-block; margin-top:0.75rem;" href="{{ url_for('sqli_auth_dashboard') }}">Open Protected Admin Dashboard &rarr;</a>
+                    {% endif %}
+                {% else %}
+                    <div class="alert alert-danger" style="margin-bottom: 0.75rem;">
+                        <strong>{{ login_result.message }}</strong>
+                    </div>
+                    {% if raw_error %}
+                        <div class="console-box blocked">
+[-] SQL Syntax Error Received:
+    {{ raw_error }}
+                        </div>
+                    {% else %}
+                        <div class="console-box blocked">
+[-] Access Denied. The database found no matching record.
+{% if mode == 'mitigated' %}
+[+] DEFENSE ACTIVE: Parameterized query treated metacharacters as a harmless literal string.
+[+] Exploit Blocked Successfully!
+{% endif %}
+                        </div>
+                    {% endif %}
+                {% endif %}
+            {% else %}
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Submit a payload above to observe the query execution result.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Right Column: Code Comparison & Table 2 Requirements -->
+    <div>
+        <!-- Table 2(a) Vulnerable Implementation & 2(d) Mitigation Implemented -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">💻 Source Code Comparison</h3>
+                <span class="meta-pill">Table 2(a) & 2(d)</span>
+            </div>
+
+            <div class="code-title" style="color: var(--accent-red);">(a) Vulnerable Implementation (Concatenation)</div>
+            <pre class="code-box code-vulnerable"><code># Flawed code path: User input directly interpolated into SQL
+executed_query = f"SELECT * FROM users WHERE username = '{username}' AND password = '{password}'"
+cursor.execute(executed_query)
+user = cursor.fetchone()</code></pre>
+
+            <div class="code-title" style="color: var(--accent-green);">(d) Implemented Mitigation (Prepared Statements)</div>
+            <pre class="code-box code-mitigated"><code># Secure code path: Parameterized query with placeholders (?)
+executed_query = "SELECT * FROM users WHERE username = ? AND password = ?"
+cursor.execute(executed_query, (username, password))
+user = cursor.fetchone()</code></pre>
+        </div>
+
+        <!-- Table 2(c) Root Cause -->
+        <div class="callout callout-root-cause">
+            <strong style="color: var(--accent-red); font-size: 0.95rem;">Table 2(c) Root Cause:</strong>
+            <p style="margin-top: 0.35rem; color: #fecaca; font-size: 0.88rem;">
+                Untrusted user input is directly concatenated into the SQL statement string before compilation. 
+                The input <code>admin' --</code> breaks out of the intended data literal delimiter, injects SQL metacharacters, 
+                and turns the remainder of the query into a SQL comment (<code>--</code>), which eliminates password verification entirely.
+            </p>
+        </div>
+
+        <!-- Table 2(e) Other Mitigations (Theory) -->
+        <div class="callout callout-theory">
+            <strong style="color: #60a5fa; font-size: 0.95rem;">Table 2(e) Alternative Mitigations (Lecture Slides Theory):</strong>
+            <ul style="margin: 0.5rem 0 0 1.25rem; font-size: 0.85rem; color: #bfdbfe; line-height: 1.6;">
+                <li><strong>Parameterized Queries / Prepared Statements:</strong> Pre-compiles the SQL query structure in the database engine, ensuring input data is strictly bound as literal values and cannot alter command syntax.</li>
+                <li><strong>Input Validation with Allow-Lists:</strong> Enforces strict regex validation (e.g., <code>^[a-zA-Z0-9_]{3,20}$</code>) on usernames, rejecting unexpected quotes, dashes, or SQL keywords.</li>
+                <li><strong>Principle of Least Privilege:</strong> Web application database accounts must only possess minimal required permissions (e.g., <code>SELECT</code> on specific tables, never <code>DROP</code>, <code>ALTER</code>, or administrator/DBA privileges).</li>
+                <li><strong>Safe Errors:</strong> Suppresses detailed database engine error messages (such as SQLite/MySQL syntax stack traces) to prevent reconnaissance and error-based data leakage.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
